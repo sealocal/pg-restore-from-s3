@@ -1,3 +1,6 @@
+# Fail fast
+set -e
+
 # Parse command-line arguments for this script
 while [[ $# -gt 1 ]]
 do
@@ -95,12 +98,12 @@ openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
 if [[ -n "$DATABASE_URL" ]]; then
   echo "Restore database using DATABASE_URL"
   # custom format
-  time pg_restore --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_custom_format.dump
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_custom_format.dump
   psql --dbname $DATABASE_URL --command "\d"
 
   # directory format
   tar -zxvf ./${DATABASE_NAME}_directory_format.tar.gz -s "/${DATABASE_NAME}.*_directory_format/${DATABASE_NAME}_directory_format/"
-  time pg_restore --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_directory_format
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_directory_format
   psql --dbname $DATABASE_URL --command "\d"
 
   # plain format
@@ -112,7 +115,7 @@ if [[ -n "$DATABASE_URL" ]]; then
   # tar format
   gzip --verbose --decompress ./${DATABASE_NAME}_tar_format.tar.gz
   UNZIPPED_FILENAME=${DATABASE_NAME}_tar_format.tar
-  time pg_restore --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_tar_format.tar
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_tar_format.tar
   psql --dbname $DATABASE_URL --command "\d"
 elif [[ -n "$DATABASE_NAME" ]]; then
   echo "Restore database using DATABASE_NAME"
