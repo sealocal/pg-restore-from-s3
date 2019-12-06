@@ -102,8 +102,9 @@ if [[ -n "$DATABASE_URL" ]]; then
   psql --dbname $DATABASE_URL --command "\d"
 
   # directory format
-  tar -zxvf ./${DATABASE_NAME}_directory_format.tar.gz -s "/${DATABASE_NAME}.*_directory_format/${DATABASE_NAME}_directory_format/"
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL ./${DATABASE_NAME}_directory_format
+  tar -zxvf ./${DATABASE_NAME}_directory_format.tar.gz
+  UNZIPPED_DIRECTORY=$(ls -dp $DATABASE_NAME_*directory_format)
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL ./$UNZIPPED_DIRECTORY
   psql --dbname $DATABASE_URL --command "\d"
 
   # plain format
@@ -153,6 +154,6 @@ fi
 rm -v ${DATABASE_NAME}_*.enc
 rm -v *.gz
 rm -v ${DATABASE_NAME}_custom_format.dump
-rm -rv ${DATABASE_NAME}_directory_format
+rm -rv ${DATABASE_NAME}_*directory_format
 rm -v ${DATABASE_NAME}_plain_format.sql
 rm -v ${DATABASE_NAME}_tar_format.tar
