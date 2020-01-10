@@ -127,9 +127,10 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   dropdb ${DATABASE_NAME}_restored
 
   # directory format
-  tar -zxvf ./${DATABASE_NAME}_directory_format.tar.gz -s "/${DATABASE_NAME}.*_directory_format/${DATABASE_NAME}_directory_format/"
+  tar -zxvf ./${DATABASE_NAME}_directory_format.tar.gz
+  UNZIPPED_DIRECTORY=$(ls -dp $DATABASE_NAME_*directory_format)
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored ./${DATABASE_NAME}_directory_format
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored ./$UNZIPPED_DIRECTORY
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
