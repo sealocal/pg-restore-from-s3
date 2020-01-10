@@ -29,9 +29,11 @@ AWS_DEFAULT_REGION=us-west-2
 DB_BACKUP_ENC_KEY=password
 
 # name of the bucket where the backups are stored
-BUCKET_NAME=your-bucket
+BUCKET_NAME=bucket_name
 # name of the folder where the backups are stored
-BUCKET_PATH=folder_name
+BUCKET_PATH=bucket_path
+# file path to which backups should be written upon download
+DOWNLOAD_PATH=download_path
 
 # the name of the database where the data will be restored
 DATABASE_NAME=database_name
@@ -45,7 +47,7 @@ DATABASE_URL=postgres://user:pass@host/database_name
 ### Example Usage
 
 ```bash
-bash /app/vendor/restore.sh --bucketname <bucket_name> --bucketpath <folder_name> --dbname <string_for_name>
+bash /app/vendor/restore.sh --bucketname <bucket_name> --bucketpath <bucket_path> --dbname <database_name>
 ```
 
 ```log
@@ -58,6 +60,10 @@ bash /app/vendor/restore.sh --bucketname <bucket_name> --bucketpath <folder_name
     specify the name of the bucket to fetch files from
 
 --bucketpath, -p
+
+    specify the name of a "folder" in a bucket to fetch files from
+
+--download-path, -d
 
     specify the name of a "folder" in a bucket to fetch files from
 
