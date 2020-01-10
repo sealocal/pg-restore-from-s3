@@ -9,3 +9,5 @@ RUN psql --version     # psql (PostgreSQL) 11.6 (Debian 11.6-1.pgdg90+1)
 # install awscli
 RUN apt-get update && apt-get install --yes python3 python3-pip
 RUN pip3 install awscli
+
+CMD aws s3 ls s3://$BUCKET_NAME/$BUCKET_PATH/
