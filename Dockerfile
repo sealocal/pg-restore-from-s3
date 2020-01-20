@@ -7,7 +7,10 @@ RUN postgres --version # postgres (PostgreSQL) 12.1 (Debian 12.1-1.pgdg100+1)
 RUN psql --version     # psql (PostgreSQL) 12.1 (Debian 12.1-1.pgdg100+1)
 
 # install awscli
-RUN apt-get update && apt-get install --yes python3 python3-pip
+RUN apt-get update && apt-get install --yes \
+  python3 \
+  python3-pip \
+  && rm -rf /var/lib/apt/lists/*
 RUN pip3 install awscli
 
 ENV PGDATA /var/lib/postgresql/data/pgdata
