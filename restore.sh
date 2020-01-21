@@ -101,6 +101,21 @@ openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_TAR_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
 
+
+if [ -f /.dockerenv ]; then
+  printf "*** Create PGDATA directory at $PGDATA ...\n"
+  mkdir $PGDATA
+
+  printf "*** Initialize the database directory ...\n"
+  pg_ctl initdb
+
+  printf "Start postgres server with database directory ...\n"
+  pg_ctl start -l /tmp/postgres.log
+
+  printf "*** Create default database for appuser ...\n"
+  createdb appuser
+fi
+
 if [[ -n "$DATABASE_URL" ]]; then
   echo "Restore database using DATABASE_URL"
   # custom format
@@ -155,6 +170,11 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
+fi
+
+if [ -f /.dockerenv ]; then
+  printf "*** Stop postgres server with database directory ...\n"
+  pg_ctl stop -l /tmp/postgres.log
 fi
 
 # cleanup
