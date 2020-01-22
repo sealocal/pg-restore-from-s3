@@ -119,22 +119,26 @@ fi
 if [[ -n "$DATABASE_URL" ]]; then
   echo "Restore database using DATABASE_URL"
   # custom format
+  printf "Restoring custom format ...\n"
   time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
   psql --dbname $DATABASE_URL --command "\d"
 
   # directory format
+  printf "Restoring directory format ...\n"
   tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
   UNZIPPED_DIRECTORY=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
   time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/$UNZIPPED_DIRECTORY
   psql --dbname $DATABASE_URL --command "\d"
 
   # plain format
+  printf "Restoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
   UNZIPPED_FILENAME=${DATABASE_NAME}_plain_format.sql
   time psql --dbname $DATABASE_URL --file=$UNZIPPED_FILENAME
   psql --dbname $DATABASE_URL --command "\d"
 
   # tar format
+  printf "Restoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
   UNZIPPED_FILENAME=${DATABASE_NAME}_tar_format.tar
   time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
@@ -142,12 +146,14 @@ if [[ -n "$DATABASE_URL" ]]; then
 elif [[ -n "$DATABASE_NAME" ]]; then
   echo "Restore database using DATABASE_NAME"
   # custom format
+  printf "Restoring custom format ...\n"
   createdb ${DATABASE_NAME}_restored
   time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
   # directory format
+  printf "Restoring directory format ...\n"
   tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --directory=$DOWNLOAD_PATH
   UNZIPPED_DIRECTORY=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
   createdb ${DATABASE_NAME}_restored
@@ -156,6 +162,7 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   dropdb ${DATABASE_NAME}_restored
 
   # plain format
+  printf "Restoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
   UNZIPPED_FILENAME=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
   createdb ${DATABASE_NAME}_restored
@@ -164,6 +171,7 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   dropdb ${DATABASE_NAME}_restored
 
   # tar format
+  printf "Restoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
   UNZIPPED_FILENAME=${DATABASE_NAME}_tar_format.tar
   createdb ${DATABASE_NAME}_restored
