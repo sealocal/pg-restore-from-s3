@@ -85,19 +85,19 @@ aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_DIRECTORY_FORMAT $DOWNLOAD_PATH
 aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_PLAIN_FORMAT $DOWNLOAD_PATH
 aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_TAR_FORMAT $DOWNLOAD_PATH
 
-openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
+openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_CUSTOM_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
 
-openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
+openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_DIRECTORY_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
 
-openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
+openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_PLAIN_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
 
-openssl enc -aes-256-cbc -d -pass "env:DB_BACKUP_ENC_KEY" \
+openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_TAR_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
 
