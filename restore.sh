@@ -101,94 +101,105 @@ openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
   -in $DOWNLOAD_PATH/$LATEST_TAR_FORMAT \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
 
-
-if [ -f /.dockerenv ]; then
-  printf "*** Create PGDATA directory at $PGDATA ...\n"
-  mkdir $PGDATA
-
-  printf "*** Initialize the database directory ...\n"
-  pg_ctl initdb
-
-  printf "Start postgres server with database directory ...\n"
-  pg_ctl start -l /tmp/postgres.log
-
-  printf "*** Create default database for appuser ...\n"
-  createdb appuser
-fi
-
 if [[ -n "$DATABASE_URL" ]]; then
+
   echo "Restore database using DATABASE_URL"
   # custom format
   printf "Restoring custom format ...\n"
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL $FILE_PATH
   psql --dbname $DATABASE_URL --command "\d"
 
   # directory format
   printf "Restoring directory format ...\n"
-  tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
-  UNZIPPED_DIRECTORY=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/$UNZIPPED_DIRECTORY
+  tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --directory=$DOWNLOAD_PATH
+  FILE_PATH=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL $FILE_PATH
   psql --dbname $DATABASE_URL --command "\d"
 
   # plain format
   printf "Restoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  UNZIPPED_FILENAME=${DATABASE_NAME}_plain_format.sql
-  time psql --dbname $DATABASE_URL --file=$UNZIPPED_FILENAME
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+  time psql --dbname $DATABASE_URL --file=$FILE_PATH
   psql --dbname $DATABASE_URL --command "\d"
 
   # tar format
   printf "Restoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  UNZIPPED_FILENAME=${DATABASE_NAME}_tar_format.tar
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL $FILE_PATH
   psql --dbname $DATABASE_URL --command "\d"
+
 elif [[ -n "$DATABASE_NAME" ]]; then
+
+  if [ -f /.dockerenv ]; then
+    printf "*** Create PGDATA directory at $PGDATA ...\n"
+    mkdir $PGDATA
+
+    printf "*** Initialize the database directory ...\n"
+    pg_ctl initdb
+
+    printf "Start postgres server with database directory ...\n"
+    pg_ctl start -l /tmp/postgres.log
+
+    printf "*** Create default database for appuser ...\n"
+    createdb appuser
+  fi
+
   echo "Restore database using DATABASE_NAME"
   # custom format
   printf "Restoring custom format ...\n"
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $FILE_PATH
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
   # directory format
   printf "Restoring directory format ...\n"
   tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --directory=$DOWNLOAD_PATH
-  UNZIPPED_DIRECTORY=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
+  FILE_PATH=$(ls -dp $DOWNLOAD_PATH/$DATABASE_NAME_*directory_format)
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $UNZIPPED_DIRECTORY
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $FILE_PATH
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
   # plain format
   printf "Restoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  UNZIPPED_FILENAME=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
   createdb ${DATABASE_NAME}_restored
-  time psql --dbname ${DATABASE_NAME}_restored --file=$UNZIPPED_FILENAME
+  time psql --dbname ${DATABASE_NAME}_restored --file=$FILE_PATH
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
   # tar format
   printf "Restoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  UNZIPPED_FILENAME=${DATABASE_NAME}_tar_format.tar
+  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $FILE_PATH
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
+
+  if [ -f /.dockerenv ]; then
+    printf "*** Stop postgres server with database directory ...\n"
+    pg_ctl stop -l /tmp/postgres.log
+  fi
 fi
 
-if [ -f /.dockerenv ]; then
-  printf "*** Stop postgres server with database directory ...\n"
-  pg_ctl stop -l /tmp/postgres.log
-fi
+# cleanup each of the encrypted backups that were downloaded
+rm -v $DOWNLOAD_PATH/$LATEST_CUSTOM_FORMAT
+rm -v $DOWNLOAD_PATH/$LATEST_DIRECTORY_FORMAT
+rm -v $DOWNLOAD_PATH/$LATEST_PLAIN_FORMAT
+rm -v $DOWNLOAD_PATH/$LATEST_TAR_FORMAT
 
-# cleanup
-rm -v $DOWNLOAD_PATH/${DATABASE_NAME}_*.enc
-rm -v $DOWNLOAD_PATH/*.gz
+# cleanup each of the unencryped backups
+rm -v $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
+
+# cleanup each of the extracted backups
 rm -v $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
-rm -rv $DOWNLOAD_PATH/${DATABASE_NAME}_*directory_format
+rm -rv $DOWNLOAD_PATH/*_directory_format
 rm -v $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
 rm -v $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
