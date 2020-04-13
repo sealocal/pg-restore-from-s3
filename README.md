@@ -55,6 +55,7 @@ docker run --rm -it \
     -e BUCKET_PATH=$BUCKET_PATH \
     -e DOWNLOAD_PATH=/tmp \
     -e DATABASE_URL=$DATABASE_URL \
+    -e FORMAT=custom \
     pg_restore_from_s3
 ```
 
@@ -69,7 +70,7 @@ bash ./build.sh
 Run the restore script.
 
 ```bash
-bash ./restore.sh --bucketname <bucket_name> --bucketpath <bucket_path> --dbname <database_name>
+bash ./restore.sh --bucketname <bucket_name> --bucketpath <bucket_path> --dbname <database_name> --format <custom>
 ```
 
 ```log
@@ -92,4 +93,14 @@ bash ./restore.sh --bucketname <bucket_name> --bucketpath <bucket_path> --dbname
 --dburl, -url
 
     specify the name location of a postgres database for data restore
+
+--format, -f
+
+    specify the format of the database backup to be imported
+
+    The formats correspond to Postgres formats for pg_restore.
+
+    Possible formats for this script are "custom", "directory", "plain", and "tar".
+
+    If this option is omitted, then all formats will be attempted (most useful for CI scripts).
 ```

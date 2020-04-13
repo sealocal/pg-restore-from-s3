@@ -27,6 +27,10 @@ case $key in
     DATABASE_URL="$2"
     shift
     ;;
+    -f|--format)
+    FORMAT="$2"
+    shift
+    ;;
 esac
 shift
 done
@@ -34,10 +38,11 @@ done
 BUCKET_NAME=${BUCKET_NAME:='bucket_name'}
 BUCKET_PATH=${BUCKET_PATH:='bucket_path'}
 DOWNLOAD_PATH=${DOWNLOAD_PATH:='./'}
+DB_BACKUP_ENC_KEY=${DB_BACKUP_ENC_KEY:=}
 
 DATABASE_NAME=${DATABASE_NAME:='database_name'}
 DATABASE_URL=${DATABASE_URL:=}
-DB_BACKUP_ENC_KEY=${DB_BACKUP_ENC_KEY:=}
+FORMAT=${FORMAT:=}
 
 if [[ -z "$DATABASE_NAME" ]]; then
   echo "Missing DATABASE_NAME variable"
@@ -62,6 +67,17 @@ fi
 if [[ -z "$DB_BACKUP_ENC_KEY" ]]; then
   echo "Missing DB_BACKUP_ENC_KEY variable"
   exit 1
+fi
+if [[ -n "$FORMAT" ]]; then
+  case $FORMAT in
+    custom | directory | plain | tar)
+      echo "Restoring with $FORMAT format ..."
+      ;;
+    *)
+      echo "Unrecognized value for --format ($FORMAT)"
+      exit 1
+      ;;
+  esac
 fi
 
 # Check initial contents of download directory
@@ -108,33 +124,42 @@ openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
 if [[ -n "$DATABASE_URL" ]]; then
 
   echo "Restore database using DATABASE_URL"
+
   # custom format
-  printf "Restoring custom format ...\n"
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
-  psql --dbname $DATABASE_URL --command "\d"
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "custom" ]; then
+    printf "Restoring custom format ...\n"
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+    time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
+    psql --dbname $DATABASE_URL --command "\d"
+  fi
 
   # directory format
-  printf "\n\nRestoring directory format ...\n"
-  dir_path=$DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
-  mkdir $dir_path
-  tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --strip-components=2 --directory=$dir_path
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $dir_path
-  psql --dbname $DATABASE_URL --command "\d"
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "directory" ]; then
+    printf "\n\nRestoring directory format ...\n"
+    dir_path=$DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
+    mkdir $dir_path
+    tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --strip-components=2 --directory=$dir_path
+    time pg_restore --clean --no-owner --dbname $DATABASE_URL $dir_path
+    psql --dbname $DATABASE_URL --command "\d"
+  fi
 
   # plain format
-  printf "\n\nRestoring plain format ...\n"
-  gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
-  time psql --dbname $DATABASE_URL --file=$file_path
-  psql --dbname $DATABASE_URL --command "\d"
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "plain" ]; then
+    printf "\n\nRestoring plain format ...\n"
+    gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+    time psql --dbname $DATABASE_URL --file=$file_path
+    psql --dbname $DATABASE_URL --command "\d"
+  fi
 
   # tar format
-  printf "\n\nRestoring tar format ...\n"
-  gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
-  psql --dbname $DATABASE_URL --command "\d"
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "tar" ]; then
+    printf "\n\nRestoring tar format ...\n"
+    gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+    time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
+    psql --dbname $DATABASE_URL --command "\d"
+  fi
 
 elif [[ -n "$DATABASE_NAME" ]]; then
 
@@ -153,41 +178,50 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   fi
 
   echo "Restore database using DATABASE_NAME"
+
   # custom format
-  printf "\n\nRestoring custom format ...\n"
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
-  createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
-  psql --dbname ${DATABASE_NAME}_restored --command "\d"
-  dropdb ${DATABASE_NAME}_restored
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "custom" ]; then
+    printf "\n\nRestoring custom format ...\n"
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+    createdb ${DATABASE_NAME}_restored
+    time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
+    psql --dbname ${DATABASE_NAME}_restored --command "\d"
+    dropdb ${DATABASE_NAME}_restored
+  fi
 
   # directory format
-  printf "\n\nRestoring directory format ...\n"
-  dir_path=$DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
-  mkdir $dir_path
-  tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --strip-components=2 --directory=$dir_path
-  createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $dir_path
-  psql --dbname ${DATABASE_NAME}_restored --command "\d"
-  dropdb ${DATABASE_NAME}_restored
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "directory" ]; then
+    printf "\n\nRestoring directory format ...\n"
+    dir_path=$DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
+    mkdir $dir_path
+    tar -zxvf $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz --strip-components=2 --directory=$dir_path
+    createdb ${DATABASE_NAME}_restored
+    time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $dir_path
+    psql --dbname ${DATABASE_NAME}_restored --command "\d"
+    dropdb ${DATABASE_NAME}_restored
+  fi
 
   # plain format
-  printf "\n\nRestoring plain format ...\n"
-  gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
-  createdb ${DATABASE_NAME}_restored
-  time psql --dbname ${DATABASE_NAME}_restored --file=$file_path
-  psql --dbname ${DATABASE_NAME}_restored --command "\d"
-  dropdb ${DATABASE_NAME}_restored
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "plain" ]; then
+    printf "\n\nRestoring plain format ...\n"
+    gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+    createdb ${DATABASE_NAME}_restored
+    time psql --dbname ${DATABASE_NAME}_restored --file=$file_path
+    psql --dbname ${DATABASE_NAME}_restored --command "\d"
+    dropdb ${DATABASE_NAME}_restored
+  fi
 
   # tar format
-  printf "\n\nRestoring tar format ...\n"
-  gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
-  createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
-  psql --dbname ${DATABASE_NAME}_restored --command "\d"
-  dropdb ${DATABASE_NAME}_restored
+  if [ -z "$FORMAT" ] || [ "$FORMAT" = "tar" ]; then
+    printf "\n\nRestoring tar format ...\n"
+    gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
+    file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+    createdb ${DATABASE_NAME}_restored
+    time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
+    psql --dbname ${DATABASE_NAME}_restored --command "\d"
+    dropdb ${DATABASE_NAME}_restored
+  fi
 
   if [ -f /.dockerenv ]; then
     printf "\n\n*** Stop postgres server with database directory ...\n"
@@ -204,9 +238,11 @@ rm -v $DOWNLOAD_PATH/$latest_tar_format
 # cleanup each of the unencryped and extracted backups
 rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
 rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
-rm -rv $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
-rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
-rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+if [ -z "$FORMAT" ] || [ "$FORMAT" = "directory" ]; then
+  rm -rv $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format/
+fi
+rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.*
+rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.*
 
 # verify empty directory
 printf "\n\nFinal contents of DOWNLOAD_PATH ($DOWNLOAD_PATH) ..."
