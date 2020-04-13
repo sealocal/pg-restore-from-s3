@@ -110,8 +110,8 @@ if [[ -n "$DATABASE_URL" ]]; then
   echo "Restore database using DATABASE_URL"
   # custom format
   printf "Restoring custom format ...\n"
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $FILE_PATH
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
   psql --dbname $DATABASE_URL --command "\d"
 
   # directory format
@@ -125,15 +125,15 @@ if [[ -n "$DATABASE_URL" ]]; then
   # plain format
   printf "\n\nRestoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
-  time psql --dbname $DATABASE_URL --file=$FILE_PATH
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+  time psql --dbname $DATABASE_URL --file=$file_path
   psql --dbname $DATABASE_URL --command "\d"
 
   # tar format
   printf "\n\nRestoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
-  time pg_restore --clean --no-owner --dbname $DATABASE_URL $FILE_PATH
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+  time pg_restore --clean --no-owner --dbname $DATABASE_URL $file_path
   psql --dbname $DATABASE_URL --command "\d"
 
 elif [[ -n "$DATABASE_NAME" ]]; then
@@ -155,9 +155,9 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   echo "Restore database using DATABASE_NAME"
   # custom format
   printf "\n\nRestoring custom format ...\n"
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $FILE_PATH
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
@@ -174,18 +174,18 @@ elif [[ -n "$DATABASE_NAME" ]]; then
   # plain format
   printf "\n\nRestoring plain format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql
   createdb ${DATABASE_NAME}_restored
-  time psql --dbname ${DATABASE_NAME}_restored --file=$FILE_PATH
+  time psql --dbname ${DATABASE_NAME}_restored --file=$file_path
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
   # tar format
   printf "\n\nRestoring tar format ...\n"
   gzip --verbose --decompress $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
-  FILE_PATH=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
+  file_path=$DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar
   createdb ${DATABASE_NAME}_restored
-  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $FILE_PATH
+  time pg_restore --no-owner --dbname ${DATABASE_NAME}_restored $file_path
   psql --dbname ${DATABASE_NAME}_restored --command "\d"
   dropdb ${DATABASE_NAME}_restored
 
