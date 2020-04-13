@@ -74,35 +74,35 @@ LATEST_FILES=$(aws s3 ls s3://$BUCKET_NAME/$BUCKET_PATH/ | tail -n 4 | grep --on
 
 printf "\n\nLATEST_FILES:\n$LATEST_FILES\n"
 
-LATEST_CUSTOM_FORMAT=$(   echo "$LATEST_FILES" | grep --only-matching .*custom_format.enc)
-LATEST_DIRECTORY_FORMAT=$(echo "$LATEST_FILES" | grep --only-matching .*directory_format.gz.enc)
-LATEST_PLAIN_FORMAT=$(    echo "$LATEST_FILES" | grep --only-matching .*plain_format.gz.enc)
-LATEST_TAR_FORMAT=$(      echo "$LATEST_FILES" | grep --only-matching .*tar_format.gz.enc)
+latest_custom_format=$(   echo "$LATEST_FILES" | grep --only-matching .*custom_format.enc)
+latest_directory_format=$(echo "$LATEST_FILES" | grep --only-matching .*directory_format.gz.enc)
+latest_plain_format=$(    echo "$LATEST_FILES" | grep --only-matching .*plain_format.gz.enc)
+latest_tar_format=$(      echo "$LATEST_FILES" | grep --only-matching .*tar_format.gz.enc)
 
-printf "\n\nLatest custom file: $LATEST_CUSTOM_FORMAT\n"
-printf "Latest directory file: $LATEST_DIRECTORY_FORMAT\n"
-printf "Latest plain file: $LATEST_PLAIN_FORMAT\n"
-printf "Latest tar file: $LATEST_TAR_FORMAT\n"
+printf "\n\nLatest custom file: $latest_custom_format\n"
+printf "Latest directory file: $latest_directory_format\n"
+printf "Latest plain file: $latest_plain_format\n"
+printf "Latest tar file: $latest_tar_format\n"
 
-aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_CUSTOM_FORMAT $DOWNLOAD_PATH
-aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_DIRECTORY_FORMAT $DOWNLOAD_PATH
-aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_PLAIN_FORMAT $DOWNLOAD_PATH
-aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$LATEST_TAR_FORMAT $DOWNLOAD_PATH
+aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$latest_custom_format $DOWNLOAD_PATH
+aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$latest_directory_format $DOWNLOAD_PATH
+aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$latest_plain_format $DOWNLOAD_PATH
+aws s3 cp s3://$BUCKET_NAME/$BUCKET_PATH/$latest_tar_format $DOWNLOAD_PATH
 
 openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
-  -in $DOWNLOAD_PATH/$LATEST_CUSTOM_FORMAT \
+  -in $DOWNLOAD_PATH/$latest_custom_format \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
 
 openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
-  -in $DOWNLOAD_PATH/$LATEST_DIRECTORY_FORMAT \
+  -in $DOWNLOAD_PATH/$latest_directory_format \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_directory_format.tar.gz
 
 openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
-  -in $DOWNLOAD_PATH/$LATEST_PLAIN_FORMAT \
+  -in $DOWNLOAD_PATH/$latest_plain_format \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_plain_format.sql.gz
 
 openssl enc -aes-256-cbc -pbkdf2 -d -pass "env:DB_BACKUP_ENC_KEY" \
-  -in $DOWNLOAD_PATH/$LATEST_TAR_FORMAT \
+  -in $DOWNLOAD_PATH/$latest_tar_format \
   -out $DOWNLOAD_PATH/${DATABASE_NAME}_tar_format.tar.gz
 
 if [[ -n "$DATABASE_URL" ]]; then
@@ -196,10 +196,10 @@ elif [[ -n "$DATABASE_NAME" ]]; then
 fi
 
 # cleanup each of the encrypted backups that were downloaded
-rm -v $DOWNLOAD_PATH/$LATEST_CUSTOM_FORMAT
-rm -v $DOWNLOAD_PATH/$LATEST_DIRECTORY_FORMAT
-rm -v $DOWNLOAD_PATH/$LATEST_PLAIN_FORMAT
-rm -v $DOWNLOAD_PATH/$LATEST_TAR_FORMAT
+rm -v $DOWNLOAD_PATH/$latest_custom_format
+rm -v $DOWNLOAD_PATH/$latest_directory_format
+rm -v $DOWNLOAD_PATH/$latest_plain_format
+rm -v $DOWNLOAD_PATH/$latest_tar_format
 
 # cleanup each of the unencryped and extracted backups
 rm -v  $DOWNLOAD_PATH/${DATABASE_NAME}_custom_format.dump
