@@ -6,9 +6,11 @@ RUN useradd --create-home --shell /bin/bash appuser
 RUN postgres --version # postgres (PostgreSQL) 12.1 (Debian 12.1-1.pgdg100+1)
 RUN psql --version     # psql (PostgreSQL) 12.1 (Debian 12.1-1.pgdg100+1)
 
+# install postgres extensions
 RUN apt-get update && apt-get install --yes \
   postgresql-12-postgis-3 \
   postgresql-12-postgis-3-scripts \
+  postgresql-12-similarity \
   && rm -rf /var/lib/apt/lists/*
 
 # install awscli
