@@ -23,5 +23,6 @@ RUN pip3 install awscli
 ENV PGDATA /var/lib/postgresql/data/pgdata
 
 USER postgres
-COPY ./restore.sh /usr/src/app/
-CMD bash /usr/src/app/restore.sh
+WORKDIR /usr/src/app/
+COPY ./restore.sh .
+CMD bash ./restore.sh
