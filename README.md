@@ -27,17 +27,24 @@ BUCKET_PATH=bucket_path
 # file path to which backups should be written upon download
 DOWNLOAD_PATH=download_path
 
-# the name of the database where the data will be restored
-DATABASE_NAME=database_name
+# The name of the database where the data will be restored.
+#
+# If TARGET_DATABASE_URL is not present, a local database with the
+# name set to TARGET_DATABASE_NAME will be the target for restoring data.
+#
+# If TARGET_DATABASE_URL is present, then TARGET_DATABASE_NAME is used
+# as the base of the name of the files that are downloaded from
+# the S3 bucket.
+#
+TARGET_DATABASE_NAME=database_name
 ```
 
 ## Optional
 
 ```
-# the url of the database where the data will be restored
-# if DATABASE_URL is present, then DATABASE_NAME is only used
-# to for as a placeholder name for the backup local backup files
-DATABASE_URL=postgres://user:pass@host/database_name
+# The url of the database where the data will be restored
+#
+TARGET_DATABASE_URL=postgres://user:pass@host/database_name
 ```
 
 ## Example Docker Usage
@@ -54,7 +61,7 @@ docker run --rm -it \
     -e BUCKET_NAME=$BUCKET_NAME \
     -e BUCKET_PATH=$BUCKET_PATH \
     -e DOWNLOAD_PATH=/tmp \
-    -e DATABASE_URL=$DATABASE_URL \
+    -e TARGET_DATABASE_URL=$TARGET_DATABASE_URL \
     -e FORMAT=custom \
     pg_restore_from_s3
 ```
